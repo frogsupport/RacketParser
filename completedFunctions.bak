@@ -1,0 +1,36 @@
+#lang racket
+
+; function archive
+
+; summary: Takes an input text file and turn it into a list of characters
+; param: input - already open input file stream
+; returns: The newly created list of every character as strings, else '$$' for eof
+(define (print-file input)
+  (define char (read-string 1 input))
+  (cond [(eof-object? char) "$$"]
+        [else (print char)
+              (print-file input)]))
+
+; summary: Takes an input stream and converts the file into a string
+; param: input - the input stream
+; returns: Either a "$$" for an empty file or the file's contents as a single string
+(define (build-string input)
+  (define char (read-string 1 input))
+  (cond [(eof-object? char) "$$"]
+        [(string-append char (build-string input))]))
+
+; summary: Takes an input stream and read from it until it encounters a whitespace or newline or eof
+;          marker. Then it returns that 'token'
+(define (build-token input)
+  (define char (read-string 1 input))
+  (cond [(eof-object? char) "$$"]
+        [(string=? char " ") ""]
+        [(string=? char "\n") ""]
+        [(string-append char (build-token input))]))
+
+; summary: designed to work with build-token. Prints every 'token' from
+;          an input stream
+(define (print-tokens in)
+  (define token (build-token in))
+  (cond [(string=? token "$$") (print token)]
+        [(print token) (print-tokens in)]))
