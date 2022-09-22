@@ -69,10 +69,16 @@
     [(string=? token ")") token]
     [(regexp-match #rx"^[0-9]" token) "number"]
     [(regexp-match #rx"^[a-z, A-Z]" token) "id"]
-    [else "Grab-Next-Token"]))
+    [(string=? token "") (get-token in)]
+    [(string=? token " ") (get-token in)]
+    [else "Something went wrong"]))
 
-; summary: main parse function
-(define (parse input)
+; next is to define "next-token", a function you can call with an input stream that simply returns the next token for you
+(define (next-token input)
+  (#t))
+
+; summary: main scan function
+(define (scan input)
   ; open input port
   (define in (open-input-file input #:mode 'text))
   ; define local fcn
@@ -96,7 +102,32 @@
   (print "Line number 1")
   (print-tokens in 1))
 
-(parse "input04.txt")
+(define (match input-token expected)
+  (if (= input-token expected) "" "Error"))
+
+(define (program input-token)
+  (cond
+    [(string=? input-token "id") (stmt-list input-token)]
+    [(string=? input-token "read") (stmt-list input-token)]
+    [(string=? input-token "write") (stmt-list input-token)]
+    [(string=? input-token "$$") (match input-token "$$") #t]
+    [else #f]))
+
+(define (stmt-list input-token)
+  (cond
+    [(string=? input-token "id") #t]
+    [(string=? input-token "read") #t]
+    [(string=? input-token "write") #t]
+    [else #f]))
+
+(define (parse input-file)
+  (define in (open-input-file input-file #:mode 'text))
+  (program (get-token in))
+  (print "This is a valid program"))
+
+(parse "input02.txt")
+
+(scan "input02.txt")
 
 
 
