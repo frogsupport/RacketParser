@@ -1,4 +1,4 @@
-#lang racket
+ #lang racket
 (require racket/match)
 
 (define (build-token input)
@@ -35,11 +35,12 @@
 
 (define (parse input)
   (define in (open-input-file input #:mode 'text))
-  ;(define inputToken (next-token in))
-  (define lineNumber 1)
-  (define line (read-line in))
-  (print (string-split line))
-  ;(program inputToken)
+  (define inputToken (next-token in))
+  ;(define lineNumber 1)
+  ;(define line (read-line in))
+  ;(print (string-split line))
+  (program inputToken)
+  (print inputToken)
   (close-input-port in))
 
 

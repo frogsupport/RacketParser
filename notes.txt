@@ -1,0 +1,22 @@
+Open input stream
+read line from input stream
+read one char from that and send it to the tokenizer
+if it matches a parenthesis, return it as that token, else try other combos
+once we find a token
+
+Algorithm:
+
+(define (parse in)
+  (open input file)
+  (feed first line to scanner)
+  (get a list of tokens)
+  (feed list to parser logic) (print errors in parser logic)
+  (recirsively call again))
+  
+
+If (we reach a space, brace, terminal, etc)
+we need to check if there is anything in the token being built
+
+Then we need to try and identify that token
+
+Else add that next char to the token, recursively call again

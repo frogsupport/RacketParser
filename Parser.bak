@@ -1,43 +1,58 @@
 #lang racket
+(require racket/match)
 
-; summary: Takes a source program file and converts it into a token stream
-; for the parser
-; notes: A token is the smallest unit of code handled by a parser. A token can
-; refer to a literal string, a value, or a class of things.
-;
-; param: lexer-src-loc - The program source file
-; returns: The token stream list
-(define lexer lexer-src-loc)
-   
+(define (build-token input)
+  (define char (read-string 1 input))
+  (cond [(eof-object? char) "$$"]
+        [(string=? char " ") ""]
+        [(string=? char "\n") ""]
+        [(string-append char (build-token input))]))
+
+; summary: Takes an input stream and works with build-tokens to parse each chunk into
+;          its proper identifier. For example anything that is a number is simply
+;          converted into a "number", and anything that is an identifier into "id".
+(define (next-token in)
+  (define token (build-token in))
+  (cond [(string=? token "$$") token]
+        [(string=? token "read") token]
+        [(string=? token "write") token]
+        [(string=? token ":=") token]
+        [(string=? token "+") token]
+        [(string=? token "-") token]
+        [(string=? token "*") token]
+        [(string=? token "/") token]
+        [(string=? token "(") token]
+        [(string=? token ")") token]
+        [(regexp-match #rx"^[0-9]" token) "number"]
+        [else "id"]))
+
+(define (program inputToken)
+  (cond [(string=? inputToken "id" "read" "write" "$$") #t]
+        [else (print "Parse error on line")]))
 
 
 
 
+(define (parse input)
+  (define in (open-input-file input #:mode 'text))
+  (define inputToken (next-token in))
+  ;(define lineNumber 1)
+  ;(define line (read-line in))
+  ;(print (string-split line))
+  (program inputToken)
+  (print inputToken)
+  (close-input-port in))
 
 
-; summary: Takes a program source file and analyzes it for syntactical correctness.
-; If the file is syntactically correct, return true. Otherwise print the offending line
-; and it's line number and false.
-; notes:
-; param: src-file - The program source file
-; returns: True if correct, false if not and offending line and number
-(define parse src-file)
 
 
+; open input stream
+;(define in (open-input-file "src1.txt" #:mode 'text))
 
+(parse "src1.txt")
 
-(define (selectionSort arr)
-  (cond [(empty? arr) '()]
-        [else (define x0 (apply min arr))
-              (cons x0 (SelectionSort (remove x0 arr)))])) 
-
-(define myList '(4 2 3 1 20 77 99 33 47 92 74 0 3 6))
-
-print(SelectionSort myList)
-
-; 'provide' makes functions available outside the file. Definitions are private by default in racket.
-(provide parse)
-(provide lexer)
+; close input stream
+;(close-input-port in)
 
 ; summary: 
 ; notes:

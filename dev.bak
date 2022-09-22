@@ -1,3 +1,95 @@
 #lang racket
+(require racket/match)
 
-(open-input-file)
+
+(define (print-tokens in)
+  (define input (open-input-file in #:mode 'text))
+  (define line (read-line input))
+  (print (list->string (string->list line)))
+  (print (string-length line)))
+
+;(print-tokens "input01.txt")
+
+
+
+
+
+
+
+
+
+
+(define (build-token input-string)
+  (cond
+    [(string=? input-string "") 
+    [(string=? input-string "(") "token-("]]))
+
+
+(define (next-token char-list)
+  (define char (string (first char-list)))
+  (build-token char))
+
+
+(define (parse in)
+  ; open input file stream
+  (define input (open-input-file in #:mode 'text))
+  ; define local function to grab lines until there are no more
+  (define (iter input-line)
+    (cond
+      [(eof-object? input-line) "Syntax error on line 0"]
+      [(void? input-line) ]
+      [((print input-line)
+         (iter (read-line input)))]))
+  (iter (read-line input)))
+  
+  
+
+(parse "input01.txt") 
+
+
+;(print (parse "src3.txt"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
