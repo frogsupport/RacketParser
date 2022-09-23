@@ -133,7 +133,24 @@
 
 ; expression
 (define (expr input-token in)
-  ("true"))
+  (cond
+    [(string=? input-token "id") (term input-token) (term-tail input-token)]
+    [(string=? input-token "number") (term input-token) (term-tail input-token)]
+    [(string=? input-token "(") (term input-token) (term-tail input-token)]
+    [else "Error"]))
+
+; term-tail
+(define (term-tail input-token in)
+  (cond
+    [(string=? input-token "+") (term input-token) (term-tail input-token)]
+    [(string=? input-token "-") (term input-token) (term-tail input-token)]
+    [(string=? input-token ")") (term input-token) (term-tail input-token)]
+    [(string=? input-token "id") (term input-token) (term-tail input-token)]
+    [(string=? input-token "read") (term input-token) (term-tail input-token)]
+    [(string=? input-token "write") (term input-token) (term-tail input-token)]
+    [else "Error"]))
+
+; term
     
 
 ; parse
