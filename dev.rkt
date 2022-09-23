@@ -103,27 +103,43 @@
   (print-tokens in 1))
 
 (define (match input-token expected)
-  (if (= input-token expected) "" "Error"))
+  (if (string=? input-token expected) "" "Error"))
 
-(define (program input-token)
+; program
+(define (program input-token in)
   (cond
-    [(string=? input-token "id") (stmt-list input-token)]
-    [(string=? input-token "read") (stmt-list input-token)]
-    [(string=? input-token "write") (stmt-list input-token)]
-    [(string=? input-token "$$") (match input-token "$$") #t]
-    [else #f]))
+    [(string=? input-token "id") (stmt-list input-token in)]
+    [(string=? input-token "read") (stmt-list input-token in)]
+    [(string=? input-token "write") (stmt-list input-token in)]
+    [(string=? input-token "$$") (stmt-list input-token in) "Accept"]
+    [else "Error"]))
 
-(define (stmt-list input-token)
+; statement list
+(define (stmt-list input-token in)
   (cond
-    [(string=? input-token "id") #t]
-    [(string=? input-token "read") #t]
-    [(string=? input-token "write") #t]
-    [else #f]))
+    [(string=? input-token "id") (stmt-list (stmt input-token in) in)]
+    [(string=? input-token "read") (stmt-list (stmt input-token in) in)]
+    [(string=? input-token "write") (stmt-list (stmt input-token in) in)]
+    [(string=? input-token "$$") input-token]
+    [else "Error"]))
 
+; statement
+(define (stmt input-token in)
+  (cond
+    [(string=? input-token "id") (match (get-token in) ":=") (expr (get-token in) in)]
+    [(string=? input-token "read") (match (get-token in) "id") (get-token in)]
+    [(string=? input-token "write") (expr (get-token in) in)]
+    [else "Error"]))
+
+; expression
+(define (expr input-token in)
+  ("true"))
+    
+
+; parse
 (define (parse input-file)
   (define in (open-input-file input-file #:mode 'text))
-  (program (get-token in))
-  (print "This is a valid program"))
+  (print (program (get-token in) in)))
 
 (parse "input02.txt")
 
