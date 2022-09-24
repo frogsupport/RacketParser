@@ -1,60 +1,156 @@
 #lang racket
-(require racket/match)
 
-(define (build-token input)
-  (define char (read-string 1 input))
-  (cond [(eof-object? char) "$$"]
-        [(string=? char " ") ""]
-        [(string=? char "\n") ""]
-        [(string-append char (build-token input))]))
+(require "scanner.rkt")
 
-; summary: Takes an input stream and works with build-tokens to parse each chunk into
-;          its proper identifier. For example anything that is a number is simply
-;          converted into a "number", and anything that is an identifier into "id".
-(define (next-token in)
-  (define token (build-token in))
-  (cond [(string=? token "$$") token]
-        [(string=? token "read") token]
-        [(string=? token "write") token]
-        [(string=? token ":=") token]
-        [(string=? token "+") token]
-        [(string=? token "-") token]
-        [(string=? token "*") token]
-        [(string=? token "/") token]
-        [(string=? token "(") token]
-        [(string=? token ")") token]
-        [(regexp-match #rx"^[0-9]" token) "number"]
-        [else "id"]))
+; match
+; summary: Takes an input token and what it's expected to match with. If it doesn't
+;          match, then it throws an error.
+(define (match input-token expected)
+  (print (string-append "Matching " expected " to token " input-token))
+  (cond
+    [(not (string=? input-token expected)) (error (string-append "Error Matching " expected " to token " input-token))]))
 
-(define (program inputToken)
-  (cond [(string=? inputToken "id" "read" "write" "$$") #t]
-        [else (print "Parse error on line")]))
+; program
+(define (program in)
+  (let ([input-token (next-token in)])
+  (cond  
+    [(or (string=? input-token "id")
+         (string=? input-token "read")
+         (string=? input-token "write")
+         (string=? input-token "$$"))
+     (match (stmt-list input-token in) "$$") "Accept"]
+    
+    [else
+     (error (string-append "Error in program with token '" input-token "'"))])))
 
+; statement list
+(define (stmt-list input-token in)
+  (cond
+    [( or (string=? input-token "id")
+          (string=? input-token "read")
+          (string=? input-token "write"))
+     (stmt-list (stmt input-token in) in)]
 
+    [(string=? input-token "$$") input-token]
+    
+    [else
+     (error (string-append "Error in stmt-list with token '" input-token "'"))]))
 
+; statement
+(define (stmt input-token in)
+  (cond
+    [(string=? input-token "id") (match input-token "id") (match (next-token in) ":=") (expr (next-token in) in)]
+    
+    [(string=? input-token "read") (match input-token "read") (match (next-token in) "id") (next-token in)]
+    
+    [(string=? input-token "write") (match input-token "write") (expr (next-token in) in)]
+    
+    [else
+     (error (string-append "Error in stmt with token '" input-token "'"))]))
 
-(define (parse input)
-  (define in (open-input-file input #:mode 'text))
-  (define inputToken (next-token in))
-  ;(define lineNumber 1)
-  ;(define line (read-line in))
-  ;(print (string-split line))
-  (program inputToken)
-  (print inputToken)
-  (close-input-port in))
+; expression
+(define (expr input-token in)
+  (cond
+    [( or (string=? input-token "id")
+          (string=? input-token "number")
+          (string=? input-token "("))
+     (term-tail (term input-token in) in)]
+    
+    [else
+     (error (string-append "Error in expr with token '" input-token "'"))]))
 
+; term-tail
+(define (term-tail input-token in)
+  (cond
+    [(or (string=? input-token "+")
+         (string=? input-token "-"))
+     (term-tail (term (add-op input-token in) in) in)]
+    
+    [( or (string=? input-token ")")
+          (string=? input-token "id")
+          (string=? input-token "read")
+          (string=? input-token "write")
+          (string=? input-token "$$"))
+     input-token]
+    
+    [else
+     (error (string-append "Error in term-tail with token '" input-token "'"))]))
 
+; term
+(define (term input-token in)
+  (cond
+    [( or (string=? input-token "id")
+          (string=? input-token "number")
+          (string=? input-token "("))
+     (factor-tail (factor input-token in) in)]
+    
+    [else
+     (error (string-append "Error in term with token '" input-token "'"))]))
 
+; factor-tail
+(define (factor-tail input-token in)
+  (cond
+    [(or (string=? input-token "*")
+         (string=? input-token "/"))
+     (factor-tail (factor (mult-op input-token in) in) in)]
+    
+    [( or (string=? input-token "+")
+          (string=? input-token "-")
+          (string=? input-token ")")
+          (string=? input-token "id")
+          (string=? input-token "read")
+          (string=? input-token "write")
+          (string=? input-token "$$"))
+     input-token]
+    
+    [else
+     (error (string-append "Error in factor-tail with token '" input-token "'"))]))
+    
+; factor
+(define (factor input-token in)
+  (cond
+    [(string=? input-token "id") (match input-token "id") (next-token in)]
+    
+    [(string=? input-token "number") (match input-token "number") (next-token in)]
+    
+    [(string=? input-token "(") (match input-token "(") (match (expr (next-token in) in) ")") (next-token in)]
+    
+    [else
+     (error (string-append "Error in factor with token '" input-token "'"))]))
 
-; open input stream
-;(define in (open-input-file "src1.txt" #:mode 'text))
+; add operation
+(define (add-op input-token in)
+  (cond
+    [(string=? input-token "+") (match input-token "+") (next-token in)]
+    
+    [(string=? input-token "-") (match input-token "-") (next-token in)]
+    
+    [else
+     (error (string-append "Error in add-op with token '" input-token "'"))]))
+
+; mult-op
+(define (mult-op input-token in)
+  (cond
+    [(string=? input-token "*") (match input-token "*") (next-token in)]
+    
+    [(string=? input-token "/") (match input-token "/") (next-token in)]
+    
+    [else
+     (error (string-append "Error in mult-op with token '" input-token "'"))]))
+
+; parse
+(define (parse input-file)
+  (cond
+    ; check if file exists
+    [(not (file-exists? input-file)) (error (string-append "Error: File '" input-file "' does not exist :("))]
+
+    ; run program
+    [else
+     (let ([in (open-input-file input-file #:mode 'text)])
+       (print (program in))
+       (close-input-port in))]))
+  
 
 (parse "src1.txt")
 
-; close input stream
-;(close-input-port in)
 
-; summary: 
-; notes:
-; param: 
-; returns:

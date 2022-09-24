@@ -1,0 +1,5 @@
+#lang racket
+
+(require "parser.rkt")
+
+(parse "src1.txt")

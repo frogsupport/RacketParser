@@ -1,0 +1,106 @@
+#lang racket
+
+(require racket/match)
+
+(provide (all-defined-out))
+
+; build-token
+; summary: Takes an input stream and reads from it until it encounters a whitespace or newline or eof
+;          marker. Then it returns that 'token' to get-token for identification.
+(define (build-token input)
+  (let ([char (read-string 1 input)])
+    (let ([peeked (peek-string 1 0 input)])
+      (cond
+        ; eof
+        [(eof-object? peeked) char]
+        [(eof-object? char) ""]
+    
+        ; case: :=
+        [(string=? peeked ":") char]
+        ;[(string=? char ":") ":"]
+        [(string=? char "=") "="]
+    
+        ; case: (
+        [(string=? peeked "(") (if (string=? char " ") "" char)]
+        [(string=? char "(") "("]
+    
+        ; case: )
+        [(string=? peeked ")") char]
+        [(string=? char ")") ")"]
+    
+        ; case: +
+        [(string=? peeked "+") (if (string=? char " ") "" char)]
+        [(string=? char "+") "+"]
+    
+        ; case: -
+        [(string=? peeked "-") char]
+        [(string=? char "-") "-"]
+    
+        ; case: *
+        [(string=? peeked "*") char]
+        [(string=? char "*") "*"]
+    
+        ; case: /
+        [(string=? peeked "/") char]
+        [(string=? char "/") "/"]
+
+        ; case whitespace or newline
+        [(string=? char " ") ""]
+        [(string=? char "\n") "\n"]
+        [(string-append char (build-token input))]))))
+
+; get-token
+; summary: Takes an input stream and grabs the next 'token' from build-token.
+;          Identifies the token and returns it, else if it's empty or whitespace
+;          grabs another token from build-token to try again.
+(define (get-token in)
+  (let ([token (build-token in)])
+    (print (string-append "Current raw token: '" token "'"))
+    (cond
+      ; empty token, grab next
+      [(string=? token "") (get-token in)]
+      [(string=? token " ") (get-token in)]
+      
+      ; return a newline token, which we need for line number info
+      [(regexp-match #rx"\n$" token)
+       (cond
+         [(regexp-match #rx"^[0-9]" token) "number\n"]
+         [(regexp-match #rx"^[a-z, A-Z]" token) "id\n"]
+         [(string=? "\n" token) "\n"]
+         [(string-append token "")])]
+
+      ; else match token and return
+      [(string=? "\n" token) "\n"]
+      [(string=? token "$$") "$$"]
+      [(string=? token "read") token]
+      [(string=? token "write") token]
+      [(string=? token ":=") token]
+      [(string=? token "+") token]
+      [(string=? token "-") token]
+      [(string=? token "*") token]
+      [(string=? token "/") token]
+      [(string=? token "(") token]
+      [(string=? token ")") token]
+      [(regexp-match #rx"^[0-9]" token) "number"]
+      [(regexp-match #rx"^[a-z, A-Z]" token) "id"]
+      
+      [else
+       (print (string-append "Error identifying token: " token))])))
+
+; next-token
+; summary: Returns the next token in an input stream. Works by calling
+;          get-token, which returns a token, or a token with a newline on the end
+;          which we need to output line number info.
+(define (next-token in)
+  (let ([token (get-token in)])
+    (print (string-append "Returning token: '" token"'"))
+    (cond
+      [(string=? token "\n") (next-token in)]
+      
+      ; strip off newline
+      [(regexp-match #rx"\n$" token)
+       (substring token 0 (- (string-length token) 1))]
+      
+      ; else return token
+      [else
+       token])))
