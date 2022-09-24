@@ -2,6 +2,31 @@
 
 ; function archive
 
+; summary: main scan function
+(define (scan input)
+  ; open input port
+  (define in (open-input-file input #:mode 'text))
+  ; define local fcn
+  (define (print-tokens in line-num)
+    (define token (get-token in))
+    (cond
+      ; end of source file case
+      [(string=? token "$$\n") (print "Done")]
+      ; empty token case
+      [(string=? token "Grab-Next-Token") (print-tokens in line-num)]
+      [(string=? token "\n")
+       (print (string-append "Line number " (number->string (+ line-num 1))))
+       (print-tokens in (+ line-num 1))]
+      ; increment line number case
+      [(regexp-match #rx"\n$" token)
+       (print (substring token 0 (- (string-length token) 1)))
+       (print (string-append "Line number " (number->string (+ line-num 1))))
+       (print-tokens in (+ line-num 1))]
+      ; recursive case
+      [else (print token) (print-tokens in line-num)]))
+  (print "Line number 1")
+  (print-tokens in 1))
+
 (define (program input-token)
   (cond
     [(string=? input-token "id") (stmt-list input-token)]
