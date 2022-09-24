@@ -47,7 +47,7 @@
 ; summary: Takes an input port and matches the next input to a token and returns that token.
 (define (get-token in)
   (define token (build-token in))
-  (print (string-append "Current token: " token))
+  ;(print (string-append "Current token: " token))
   (cond
     ; return a newline token, which we need for line number
     [(regexp-match #rx"\n$" token)
@@ -76,6 +76,7 @@
 ; next-token
 (define (next-token in)
   (let ([token (get-token in)])
+    (print (string-append "Returning token: '" token"'"))
     (cond
       [(string=? token "\n") (next-token in)]
       ; strip off newline
@@ -91,14 +92,16 @@
     [(not (string=? input-token expected)) (error (string-append "Error Matching " expected " to token " input-token))]))
 
 ; program
-(define (program input-token in)
-  (cond
+(define (program in)
+  (let ([input-token (next-token in)])
+  (cond  
     [(or (string=? input-token "id")
          (string=? input-token "read")
          (string=? input-token "write")
          (string=? input-token "$$"))
      (match (stmt-list input-token in) "$$") "Accept"]
-    [else (print (string-append "Error in program, token: " input-token))]))
+    
+    [else (print (string-append "Error in program, token: " input-token))])))
 
 ; statement list
 (define (stmt-list input-token in)
@@ -106,16 +109,21 @@
     [( or (string=? input-token "id")
           (string=? input-token "read")
           (string=? input-token "write"))
-     (stmt input-token in) (stmt-list (next-token in) in)]
+     (stmt-list (stmt input-token in) in)]
+
     [(string=? input-token "$$") input-token]
+    
     [else (error (string-append "Error in stmt-list with token '" input-token "'"))]))
 
 ; statement
 (define (stmt input-token in)
   (cond
-    [(string=? input-token "id") (match input-token "id") (match (next-token in) ":=") (stmt-list (expr (next-token in) in) in)]
-    [(string=? input-token "read") (match input-token "read") (match (next-token in) "id")]
+    [(string=? input-token "id") (match input-token "id") (match (next-token in) ":=") (expr (next-token in) in)]
+    
+    [(string=? input-token "read") (match input-token "read") (match (next-token in) "id") (next-token in)]
+    
     [(string=? input-token "write") (match input-token "write") (expr (next-token in) in)]
+    
     [else (error (string-append "Error in stmt with token '" input-token "'"))]))
 
 ; expression
@@ -125,6 +133,7 @@
           (string=? input-token "number")
           (string=? input-token "("))
      (term-tail (term input-token in) in)]
+    
     [else (error (string-append "Error in expr with token '" input-token "'"))]))
 
 ; term-tail
@@ -132,13 +141,15 @@
   (cond
     [(or (string=? input-token "+")
          (string=? input-token "-"))
-     (add-op input-token in) (term-tail (term (next-token in) in) in)]
+     (term-tail (term (add-op input-token in) in) in)]
+    
     [( or (string=? input-token ")")
           (string=? input-token "id")
           (string=? input-token "read")
           (string=? input-token "write")
           (string=? input-token "$$"))
      input-token]
+    
     [else  (error (string-append "Error in term-tail with token '" input-token "'"))]))
 
 ; term
@@ -148,6 +159,7 @@
           (string=? input-token "number")
           (string=? input-token "("))
      (factor-tail (factor input-token in) in)]
+    
     [else (error (string-append "Error in term with token '" input-token "'"))]))
 
 ; factor-tail
@@ -155,7 +167,8 @@
   (cond
     [(or (string=? input-token "*")
          (string=? input-token "/"))
-     (mult-op input-token in) (factor (next-token in) in) (factor-tail (next-token in) in)]
+     (factor-tail (factor (mult-op input-token in) in) in)]
+    
     [( or (string=? input-token "+")
           (string=? input-token "-")
           (string=? input-token ")")
@@ -164,36 +177,44 @@
           (string=? input-token "write")
           (string=? input-token "$$"))
      input-token]
+    
     [else(error (string-append "Error in factor-tail with token '" input-token "'"))]))
     
 ; factor
 (define (factor input-token in)
   (cond
-    [(string=? input-token "id") (match input-token "id")]
-    [(string=? input-token "number") (match input-token "number")]
-    [(string=? input-token "(") (match input-token "(") (match (expr (next-token in) in) ")")]
+    [(string=? input-token "id") (match input-token "id") (next-token in)]
+    
+    [(string=? input-token "number") (match input-token "number") (next-token in)]
+    
+    [(string=? input-token "(") (match input-token "(") (match (expr (next-token in) in) ")") (next-token in)]
+    
     [else (error (string-append "Error in factor with token '" input-token "'"))]))
 
 ; add operation
 (define (add-op input-token in)
   (cond
-    [(string=? input-token "+") (match input-token "+")]
-    [(string=? input-token "-") (match input-token "-")]
+    [(string=? input-token "+") (match input-token "+") (next-token in)]
+    
+    [(string=? input-token "-") (match input-token "-") (next-token in)]
+    
     [else (error (string-append "Error in add-op with token '" input-token "'"))]))
 
 ; mult-op
 (define (mult-op input-token in)
   (cond
-    [(string=? input-token "*") (match input-token "*")]
-    [(string=? input-token "/") (match input-token "/")]
+    [(string=? input-token "*") (match input-token "*") (next-token in)]
+    
+    [(string=? input-token "/") (match input-token "/") (next-token in)]
+    
     [else (error (string-append "Error in mult-op with token '" input-token "'"))]))
 
 ; parse
 (define (parse input-file)
   (let ([in (open-input-file input-file #:mode 'text)])
-        (print (program (next-token in) in))))
+        (print (program in))))
 
-(parse "src3.txt")
+(parse "input01.txt")
 
 
 

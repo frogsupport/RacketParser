@@ -27,6 +27,24 @@
   (print "Line number 1")
   (print-tokens in 1))
 
+; add operation
+(define (add-op input-token in)
+  (cond
+    [(string=? input-token "+") (match input-token "+")]
+    
+    [(string=? input-token "-") (match input-token "-")]
+    
+    [else (error (string-append "Error in add-op with token '" input-token "'"))]))
+
+; mult-op
+(define (mult-op input-token in)
+  (cond
+    [(string=? input-token "*") (match input-token "*")]
+    
+    [(string=? input-token "/") (match input-token "/")]
+    
+    [else (error (string-append "Error in mult-op with token '" input-token "'"))]))
+
 (define (program input-token)
   (cond
     [(string=? input-token "id") (stmt-list input-token)]
