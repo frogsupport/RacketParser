@@ -1,0 +1,6 @@
+start the pair in scanner
+program calls next-token
+next-token calls identify token
+token string is returned from idenfity token
+create pair in next-token
+program will return a pair

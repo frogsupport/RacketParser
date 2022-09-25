@@ -97,11 +97,11 @@
       
       ; case token ending in "\n" strip off newline, increment line number
       [(regexp-match #rx"\n$" (car token-pair))
-       (print (string-append "Returning (token: '" (car token-pair) "' line-num: '" (number->string (cdr token-pair)) "')"))
+       (print (string-append "Returning ('" (car token-pair) "', line " (number->string (cdr token-pair)) ")"))
        (cons (substring (car token-pair) 0 (- (string-length (car token-pair)) 1)) (+ (cdr token-pair) 1))]
       
       ; else return token
       [else
-       (print (string-append "Returning (token: '" (car token-pair) "' line-num: '" (number->string (cdr token-pair)) "')"))
+       (print (string-append "Returning ('" (car token-pair) "', line " (number->string (cdr token-pair)) ")"))
        token-pair])))
 
