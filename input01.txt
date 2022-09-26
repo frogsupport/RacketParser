@@ -1,6 +1,8 @@
-a :=           ( 3 +2)*5
-b:=a + 6 * 7 + 3
-write (a+b)*(a-b)
-$$
+poopy := 3
+a := poopy { * ( 3 +2)*5
+b :=a / 6 * 7 + 3
+write poopy - (a+b)*(a-b)
+$
+
 
 
