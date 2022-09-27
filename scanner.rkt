@@ -2,6 +2,20 @@
 
 (provide (all-defined-out))
 
+; return-char
+; summary: for returning characters if we peek a terminal ahead of us.
+;          This is for the case when we might have some spaces attached to a
+;          terminal token such as write, and we do not want to have any
+;          of those spaces attached.
+(define (return-char char)
+  (cond
+    [(or (string=? char "")
+          (string=? char " "))
+     ""]
+
+    [else
+     char]))
+
 ; build-token
 ; summary: Takes an input stream and reads from it until it encounters a whitespace or newline or eof
 ;          marker. Then it returns that 'token' to get-token for identification.
@@ -17,34 +31,35 @@
         [(eof-object? peeked) char]
     
         ; case: :=
-        [(string=? peeked ":") char]
+        [(string=? peeked ":") (return-char char)]
         [(string=? char "=") "="]
     
         ; case: (
-        [(string=? peeked "(") (if (string=? char " ") "" char)]
+        [(string=? peeked "(") (return-char char)]
         [(string=? char "(") "("]
     
         ; case: )
-        [(string=? peeked ")") char]
+        [(string=? peeked ")") (return-char char)]
         [(string=? char ")") ")"]
     
         ; case: +
-        [(string=? peeked "+") (if (string=? char " ") "" char)]
+        [(string=? peeked "+") (return-char char)]
         [(string=? char "+") "+"]
     
         ; case: -
-        [(string=? peeked "-") char]
+        [(string=? peeked "-") (return-char char)]
         [(string=? char "-") "-"]
     
         ; case: *
-        [(string=? peeked "*") char]
+        [(string=? peeked "*") (return-char char)]
         [(string=? char "*") "*"]
     
         ; case: /
-        [(string=? peeked "/") char]
+        [(string=? peeked "/") (return-char char)]
         [(string=? char "/") "/"]
 
         ; case whitespace or newline
+        [(string=? peeked "\n") (return-char char)]
         [(string=? char " ") ""]
         [(string=? char "\n") "\n"]
         [(string-append char (build-token input))]))))
@@ -55,7 +70,7 @@
 ;          grabs another token from build-token to try again.
 (define (identify-token input-token in)
   (let ([token (cons (build-token in) (cdr input-token))])
-    ;(print (string-append "Current raw token: '" token "'"))
+    (print (string-append "Current raw token: '" (car token) "'"))
     (cond
       ; case empty token, so grab next
       [(string=? (car token) "") (identify-token (cons "" (cdr token)) in)]
@@ -68,8 +83,11 @@
          [(regexp-match #rx"^[0-9]" (car token)) "number\n"]
          [(regexp-match #rx"^[a-z, A-Z]" (car token)) "id\n"]
          [(string=? "\n" (car token)) "\n"]
+         
          ; special case of a single '$' ending a line
-         [(string=? "$\n" (car token)) (error (string-append "ERROR: Unable to identify '$' on line " (number->string (cdr token))))]
+         [(string=? "$\n" (car token))
+          (error (string-append "ERROR: Unable to identify '$' on line " (number->string (cdr token))))]
+         
          [else
           (string-append (car token) "")])]
 
@@ -105,11 +123,11 @@
       
       ; case token ending in "\n" strip off newline, increment line number, return token
       [(regexp-match #rx"\n$" (car token))
-       ;(print (string-append "Returning ('" (car token-pair) "', line " (number->string (cdr token-pair)) ")"))
+       (print (string-append "Returning ('" (car token) "', line " (number->string (cdr token)) ")"))
        (cons (substring (car token) 0 (- (string-length (car token)) 1)) (+ (cdr token) 1))]
       
       ; else return token
       [else
-       ;(print (string-append "Returning ('" (car token) "', line " (number->string (cdr token)) ")"))
+       (print (string-append "Returning ('" (car token) "', line " (number->string (cdr token)) ")"))
        token])))
 
