@@ -70,7 +70,7 @@
 ;          grabs another token from build-token to try again.
 (define (identify-token input-token in)
   (let ([token (cons (build-token in) (cdr input-token))])
-    (print (string-append "Current raw token: '" (car token) "'"))
+    ;(print (string-append "Current raw token: '" (car token) "'"))
     (cond
       ; case empty token, so grab next
       [(string=? (car token) "") (identify-token (cons "" (cdr token)) in)]
@@ -123,11 +123,11 @@
       
       ; case token ending in "\n" strip off newline, increment line number, return token
       [(regexp-match #rx"\n$" (car token))
-       (print (string-append "Returning ('" (car token) "', line " (number->string (cdr token)) ")"))
+       ;(print (string-append "Returning ('" (car token) "', line " (number->string (cdr token)) ")"))
        (cons (substring (car token) 0 (- (string-length (car token)) 1)) (+ (cdr token) 1))]
       
       ; else return token
       [else
-       (print (string-append "Returning ('" (car token) "', line " (number->string (cdr token)) ")"))
+       ;(print (string-append "Returning ('" (car token) "', line " (number->string (cdr token)) ")"))
        token])))
 
