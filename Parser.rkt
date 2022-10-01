@@ -60,11 +60,14 @@
 ; statement
 (define (stmt input-token in)
   (cond
-    [(string=? (car input-token) "id") (expr (next-token (match (next-token (match input-token "id") in) ":=") in) in)]
+    [(string=? (car input-token) "id")
+     (expr (next-token (match (next-token (match input-token "id") in) ":=") in) in)]
     
-    [(string=? (car input-token) "read") (next-token (match (next-token (match input-token "read") in) "id") in)]
+    [(string=? (car input-token) "read")
+     (next-token (match (next-token (match input-token "read") in) "id") in)]
     
-    [(string=? (car input-token) "write") (expr (next-token (match input-token "write") in) in)]
+    [(string=? (car input-token) "write")
+     (expr (next-token (match input-token "write") in) in)]
     
     [else
      (parse-error input-token)]))
@@ -130,15 +133,18 @@
 ; factor
 (define (factor input-token in)
   (cond
-    [(string=? (car input-token) "id") (next-token (match input-token "id") in)]
+    [(string=? (car input-token) "id")
+     (next-token (match input-token "id") in)]
     
-    [(string=? (car input-token) "number") (next-token (match input-token "number") in)]
+    [(string=? (car input-token) "number")
+     (next-token (match input-token "number") in)]
 
     ; This is a bit cryptic if I haven't looked at it in a while because of all the nested calls, but a good description here helps to understand a lot
     ; of the logic in this file. We are trying to match the pattern '(expr)'. So in the inntermost function call
     ; we are first matching the current token to '(', then calling expression with the next token. Then we match whatever expression ends up returning
     ; to ')'. Then we return the next token up the call chain.
-    [(string=? (car input-token) "(") (next-token (match (expr (next-token (match input-token "(") in) in) ")") in)]
+    [(string=? (car input-token) "(")
+     (next-token (match (expr (next-token (match input-token "(") in) in) ")") in)]
     
     [else
      (parse-error input-token)]))
@@ -146,9 +152,11 @@
 ; add operation
 (define (add-op input-token in)
   (cond
-    [(string=? (car input-token) "+") (next-token (match input-token "+") in)]
+    [(string=? (car input-token) "+")
+     (next-token (match input-token "+") in)]
     
-    [(string=? (car input-token) "-") (next-token (match input-token "-") in)]
+    [(string=? (car input-token) "-")
+     (next-token (match input-token "-") in)]
     
     [else
      (parse-error input-token)]))
@@ -156,9 +164,11 @@
 ; mult-op
 (define (mult-op input-token in)
   (cond
-    [(string=? (car input-token) "*") (next-token (match input-token "*") in)]
+    [(string=? (car input-token) "*")
+     (next-token (match input-token "*") in)]
     
-    [(string=? (car input-token) "/") (next-token (match input-token "/") in)]
+    [(string=? (car input-token) "/")
+     (next-token (match input-token "/") in)]
     
     [else
      (parse-error input-token)]))
@@ -167,7 +177,8 @@
 (define (parse input-file)
   (cond
     ; check if file exists
-    [(not (file-exists? input-file)) (error (string-append "ERROR: File '" input-file "' not found :("))]
+    [(not (file-exists? input-file))
+     (error (string-append "ERROR: File '" input-file "' not found :("))]
 
     ; run program
     [else

@@ -2,4 +2,8 @@
 
 (require "parser.rkt")
 
-(parse "src1.txt")
+; Enter file name of file to parse
+(parse "input-files/input02.txt")
+
+; TODO: Need to handle the newline cases more
+; gracefully

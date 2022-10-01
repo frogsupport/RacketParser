@@ -1,8 +1,20 @@
 #lang racket
 
-(require racket/match)
-
 (provide (all-defined-out))
+
+; return-char
+; summary: for returning characters if we peek a terminal ahead of us.
+;          This is for the case when we might have some spaces attached to a
+;          terminal token such as write, and we do not want to have any
+;          of those spaces attached.
+(define (return-char char)
+  (cond
+    [(or (string=? char "")
+          (string=? char " "))
+     ""]
+
+    [else
+     char]))
 
 ; build-token
 ; summary: Takes an input stream and reads from it until it encounters a whitespace or newline or eof
@@ -11,96 +23,111 @@
   (let ([char (read-string 1 input)])
     (let ([peeked (peek-string 1 0 input)])
       (cond
+         ; reached eof without a '$$' token
+        [(eof-object? char)
+         (error "ERROR: EOF reached without expected token '$$'")]
+
         ; eof
         [(eof-object? peeked) char]
-        [(eof-object? char) ""]
     
         ; case: :=
-        [(string=? peeked ":") char]
-        ;[(string=? char ":") ":"]
+        [(string=? peeked ":") (return-char char)]
         [(string=? char "=") "="]
     
         ; case: (
-        [(string=? peeked "(") (if (string=? char " ") "" char)]
+        [(string=? peeked "(") (return-char char)]
         [(string=? char "(") "("]
     
         ; case: )
-        [(string=? peeked ")") char]
+        [(string=? peeked ")") (return-char char)]
         [(string=? char ")") ")"]
     
         ; case: +
-        [(string=? peeked "+") (if (string=? char " ") "" char)]
+        [(string=? peeked "+") (return-char char)]
         [(string=? char "+") "+"]
     
         ; case: -
-        [(string=? peeked "-") char]
+        [(string=? peeked "-") (return-char char)]
         [(string=? char "-") "-"]
     
         ; case: *
-        [(string=? peeked "*") char]
+        [(string=? peeked "*") (return-char char)]
         [(string=? char "*") "*"]
     
         ; case: /
-        [(string=? peeked "/") char]
+        [(string=? peeked "/") (return-char char)]
         [(string=? char "/") "/"]
 
         ; case whitespace or newline
+        [(string=? peeked "\n") (return-char char)]
         [(string=? char " ") ""]
         [(string=? char "\n") "\n"]
         [(string-append char (build-token input))]))))
 
-; get-token
+; identify-token
 ; summary: Takes an input stream and grabs the next 'token' from build-token.
 ;          Identifies the token and returns it, else if it's empty or whitespace
 ;          grabs another token from build-token to try again.
-(define (get-token in)
-  (let ([token (build-token in)])
-    (print (string-append "Current raw token: '" token "'"))
+(define (identify-token input-token in)
+  (let ([token (cons (build-token in) (cdr input-token))])
+    ;(print (string-append "Current raw token: '" (car token) "'"))
     (cond
-      ; empty token, grab next
-      [(string=? token "") (get-token in)]
-      [(string=? token " ") (get-token in)]
+      ; case empty token, so grab next
+      [(string=? (car token) "") (identify-token (cons "" (cdr token)) in)]
+      [(string=? (car token) " ") (identify-token (cons "" (cdr token)) in)]
       
-      ; return a newline token, which we need for line number info
-      [(regexp-match #rx"\n$" token)
+      ; if token ends in \n then it's a newline token
+      ; we will use this to increment the line number
+      [(regexp-match #rx"\n$" (car token))
        (cond
-         [(regexp-match #rx"^[0-9]" token) "number\n"]
-         [(regexp-match #rx"^[a-z, A-Z]" token) "id\n"]
-         [(string=? "\n" token) "\n"]
-         [(string-append token "")])]
+         [(regexp-match #rx"^[0-9]" (car token)) "number\n"]
+         [(regexp-match #rx"^[a-z, A-Z]" (car token)) "id\n"]
+         [(string=? "\n" (car token)) "\n"]
+         
+         ; special case of a single '$' ending a line
+         [(string=? "$\n" (car token))
+          (error (string-append "ERROR: Unable to identify '$' on line " (number->string (cdr token))))]
+         
+         [else
+          (string-append (car token) "")])]
 
-      ; else match token and return
-      [(string=? "\n" token) "\n"]
-      [(string=? token "$$") "$$"]
-      [(string=? token "read") token]
-      [(string=? token "write") token]
-      [(string=? token ":=") token]
-      [(string=? token "+") token]
-      [(string=? token "-") token]
-      [(string=? token "*") token]
-      [(string=? token "/") token]
-      [(string=? token "(") token]
-      [(string=? token ")") token]
-      [(regexp-match #rx"^[0-9]" token) "number"]
-      [(regexp-match #rx"^[a-z, A-Z]" token) "id"]
+      ; match terminals and \n
+      [(string=? (car token) "\n") "\n"]
+      [(string=? (car token) "$$") "$$"]
+      [(string=? (car token) "read") "read"]
+      [(string=? (car token) "write") "write"]
+      [(string=? (car token) ":=") ":="]
+      [(string=? (car token) "+") "+"]
+      [(string=? (car token) "-") "-"]
+      [(string=? (car token) "*") "*"]
+      [(string=? (car token) "/") "/"]
+      [(string=? (car token) "(") "("]
+      [(string=? (car token) ")") ")"]
+
+      ; match id's and numbers
+      [(regexp-match #rx"^[0-9]" (car token)) "number"]
+      [(regexp-match #rx"^[a-z, A-Z]" (car token)) "id"]
       
       [else
-       (print (string-append "Error identifying token: " token))])))
+       (error (string-append "ERROR: Unable to identify '" (car token) "' on line " (number->string (cdr token))))])))
 
 ; next-token
-; summary: Returns the next token in an input stream. Works by calling
-;          get-token, which returns a token, or a token with a newline on the end
+; summary: Returns the next token in an input stream. This token is a pair of the form (token, line-number).
+;          Works by calling get-token, which returns a token, or a token with a newline on the end
 ;          which we need to output line number info.
-(define (next-token in)
-  (let ([token (get-token in)])
-    (print (string-append "Returning token: '" token"'"))
+(define (next-token input-token in)
+  (let ([token (cons (identify-token input-token in) (cdr input-token))])
     (cond
-      [(string=? token "\n") (next-token in)]
+      ; case "\n" recursive call because of a newline
+      [(string=? (car token) "\n") (next-token (cons "" (+ (cdr token) 1)) in)]
       
-      ; strip off newline
-      [(regexp-match #rx"\n$" token)
-       (substring token 0 (- (string-length token) 1))]
+      ; case token ending in "\n" strip off newline, increment line number, return token
+      [(regexp-match #rx"\n$" (car token))
+       ;(print (string-append "Returning ('" (car token) "', line " (number->string (cdr token)) ")"))
+       (cons (substring (car token) 0 (- (string-length (car token)) 1)) (+ (cdr token) 1))]
       
       ; else return token
       [else
+       ;(print (string-append "Returning ('" (car token) "', line " (number->string (cdr token)) ")"))
        token])))
+
