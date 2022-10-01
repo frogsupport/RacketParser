@@ -11,7 +11,7 @@
 
 ; match
 ; summary: Takes an input token and what it's expected to match with. If it doesn't
-;          match, then it throws an error.
+; match, then it throws an error.
 (define (match input-token expected)
   ;(print (string-append "Matching " expected " to token " (car input-token)))
   (cond
