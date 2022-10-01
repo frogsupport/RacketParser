@@ -40,5 +40,5 @@ mult op −→ * | /
 
 ### Resources Used
 
-[Beautiful Racket](https://beautifulracket.com/)
+[Beautiful Racket](https://beautifulracket.com/) <br />
 [Rosetta Code](https://rosettacode.org/wiki/Sorting_algorithms/Selection_sort#Racket)
