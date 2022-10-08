@@ -1,7 +1,7 @@
 # RacketParser
 
 A partial parser for a simple calculator language. This program will judge whether the given source code follows the
-syntactical rules of the language or not; no parse tree is created.
+syntactical rules of the language or not; no parse tree is created. Created by Kyle Schaudt for CS441.
 
 ## How to Use
 
