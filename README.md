@@ -8,7 +8,7 @@ syntactical rules of the language or not; no parse tree is created. Created by K
 1. Pull this repository down to your local machine.
 2. Open the 'main.rkt' file.
 3. Enter the file path for the file you wish to parse as the parameter in the `parse` function. **Note**: The file you choose should be in the same directory.
-4. The console will print 'Accept' if the source code you parsed is syntactically correct, else it will throw an error with the offending token and line number.
+4. The console will print 'Accept' if the source code you gave is syntactically correct. Otherwise it will throw an error with the offending token and line number from the given source code.
 
 ### Grammar
 
